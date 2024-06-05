@@ -1,7 +1,7 @@
 from ConfirmCommutativeSemiring import ConfirmCommutativeSemiring
 
 class CommutativeSemiring:
-    def __init__(self, aggregation_op, combination_op, zero, one, value, count=1):
+    def __init__(self, aggregation_op, combination_op, zero, one, value=1):
         self.aggregation_op = aggregation_op
         self.combination_op = combination_op
         self.zero = zero
