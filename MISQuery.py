@@ -1,62 +1,100 @@
-from itertools import combinations
 from CommutativeSemiring import CommutativeSemiring
 from SelectiveSemiringExtension import SelectiveSemiringExtension
+import itertools
 
 class MISQuery:
     def __init__(self, graph, semiring_extension):
         self.graph = graph
         self.semiring_extension = semiring_extension
-
-    def is_independent_set(self, subset):
-        """Check if the given subset of vertices forms an independent set."""
-        for v in subset:
-            for u in subset:
-                if v != u and self.graph.has_edge(v, u):
-                    return False
-        return True
-    
-    def generate_all_subsets(self):
-        """Generate all subsets of the graph's nodes."""
-        return (subset for r in range(len(self.graph.nodes()) + 1) 
-                          for subset in combinations(self.graph.nodes(), r))
+        self.nodes_list = list(self.graph.nodes())
 
     def calculate_mis(self):
-        """Calculate the maximum independent set using the selective semiring extension."""
-        zero_base = CommutativeSemiring(
+        combinations = list(itertools.product([0, 1], repeat=len(self.graph.nodes())))
+        zero_base = CommutativeSemiring[self.semiring_extension.base_semiring.aggregation_op,self.semiring_extension.base_semiring.combination_op](
             self.semiring_extension.base_semiring.aggregation_op,
             self.semiring_extension.base_semiring.combination_op,
             self.semiring_extension.base_semiring.zero,
             self.semiring_extension.base_semiring.one,
             float('-inf')
         )
-        zero_extension = CommutativeSemiring(
-            self.semiring_extension.extension_semiring.aggregation_op,
-            self.semiring_extension.extension_semiring.combination_op,
-            self.semiring_extension.extension_semiring.zero,
-            self.semiring_extension.extension_semiring.one,
-            1
+        zero_extension_counting = CommutativeSemiring[self.semiring_extension.extension_counting.aggregation_op,self.semiring_extension.extension_counting.combination_op](
+            self.semiring_extension.extension_counting.aggregation_op,
+            self.semiring_extension.extension_counting.combination_op,
+            self.semiring_extension.extension_counting.zero,
+            self.semiring_extension.extension_counting.one,
+            0
         )
-        best_result = SelectiveSemiringExtension(zero_base, zero_extension)
+        zero_extension_sampling = CommutativeSemiring[self.semiring_extension.extension_sampling.aggregation_op,self.semiring_extension.extension_sampling.combination_op](
+            self.semiring_extension.extension_sampling.aggregation_op,
+            self.semiring_extension.extension_sampling.combination_op,
+            self.semiring_extension.extension_sampling.zero,
+            self.semiring_extension.extension_sampling.one,
+            frozenset()
+        )
 
-        all_subsets = self.generate_all_subsets()
-        
-        for subset in all_subsets:
-            if self.is_independent_set(subset):
-                temp_base = CommutativeSemiring(
-                    self.semiring_extension.base_semiring.aggregation_op,
-                    self.semiring_extension.base_semiring.combination_op,
-                    self.semiring_extension.base_semiring.zero,
-                    self.semiring_extension.base_semiring.one,
-                    value=len(subset) 
+        best_result = SelectiveSemiringExtension(zero_base, zero_extension_counting, zero_extension_sampling)
+
+        for combination in combinations:
+            value = 0
+            ele = frozenset()
+
+            best_base = CommutativeSemiring(
+                self.semiring_extension.base_semiring.aggregation_op,
+                self.semiring_extension.base_semiring.combination_op,
+                self.semiring_extension.base_semiring.zero,
+                self.semiring_extension.base_semiring.one,
+                0 
+            )
+
+            best_sample = CommutativeSemiring(
+                self.semiring_extension.extension_sampling.aggregation_op,
+                self.semiring_extension.extension_sampling.combination_op,
+                self.semiring_extension.extension_sampling.zero,
+                self.semiring_extension.extension_sampling.one,
+                frozenset()
+            )
+
+            for i, j in self.graph.edges():
+                if combination[i-1] == 1 and combination[j-1] == 1:
+                    value = float('-inf')
+                    break
+
+            if value != float('-inf'):
+                for i in range(len(combination)):
+                    value = combination[i]
+
+                    current_base = CommutativeSemiring(
+                            self.semiring_extension.base_semiring.aggregation_op,
+                            self.semiring_extension.base_semiring.combination_op,
+                            self.semiring_extension.base_semiring.zero,
+                            self.semiring_extension.base_semiring.one,
+                            value
+                    )
+
+                    best_base = best_base * current_base
+
+                    if combination[i]:
+                        ele = self.semiring_extension.extension_sampling.combination_op(ele, frozenset({i+1}))
+
+
+                best_sample = CommutativeSemiring(
+                        self.semiring_extension.extension_sampling.aggregation_op,
+                        self.semiring_extension.extension_sampling.combination_op,
+                        self.semiring_extension.extension_sampling.zero,
+                        self.semiring_extension.extension_sampling.one,
+                        {ele}
                 )
-                temp_extension = CommutativeSemiring(
-                    self.semiring_extension.extension_semiring.aggregation_op,
-                    self.semiring_extension.extension_semiring.combination_op,
-                    self.semiring_extension.extension_semiring.zero,
-                    self.semiring_extension.extension_semiring.one
-                )
-                current_extended = SelectiveSemiringExtension(temp_base, temp_extension)
+
+            zero_extension_counting = CommutativeSemiring(
+                self.semiring_extension.extension_counting.aggregation_op,
+                self.semiring_extension.extension_counting.combination_op,
+                self.semiring_extension.extension_counting.zero,
+                self.semiring_extension.extension_counting.one,
+                1
+            )
+
+            current_extension = SelectiveSemiringExtension(best_base, zero_extension_counting, best_sample)
             
-                best_result = best_result + current_extended 
-        
+            best_result = best_result + current_extension
+
         return best_result
