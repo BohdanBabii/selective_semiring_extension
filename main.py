@@ -23,11 +23,11 @@ def generate_edge_case_graphs():
 
     # 3. Single Edge
     graphs['single_edge'] = nx.Graph()
-    graphs['single_edge'].add_edge(1, 2)
+    graphs['single_edge'].add_edge(0, 1)
 
     # 4. Disconnected Graph
     graphs['disconnected'] = nx.Graph()
-    graphs['disconnected'].add_edges_from([(1, 2), (3, 4)])
+    graphs['disconnected'].add_edges_from([(0, 1), (2, 3)])
 
     # 5. Complete Graph
     graphs['complete'] = nx.complete_graph(5)
