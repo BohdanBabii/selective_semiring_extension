@@ -19,9 +19,6 @@ The project is structured as follows:
 
 To run this project, ensure you have Python installed along with the necessary libraries:
 
-```sh
-pip install networkx matplotlib
-
 usage_content = """
 ## Usage
 
@@ -43,3 +40,4 @@ usage_content = """
 
 ```sh
 python main.py
+
