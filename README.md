@@ -21,7 +21,7 @@ To run this project, ensure you have Python installed along with the necessary l
 
 ```sh
 pip install networkx matplotlib
-``
+```
 
 ## Usage
 
