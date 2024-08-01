@@ -1,4 +1,3 @@
-readme_content = """
 # Commutative Semiring Project
 
 ## Overview
