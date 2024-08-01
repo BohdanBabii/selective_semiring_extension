@@ -19,7 +19,10 @@ The project is structured as follows:
 
 To run this project, ensure you have Python installed along with the necessary libraries:
 
-usage_content = """
+```sh
+pip install networkx matplotlib
+``
+
 ## Usage
 
 1. **Define Semiring Operations**: In `SemiringOperations.py`, various static methods are defined to perform operations like max, add, multiply, etc.
